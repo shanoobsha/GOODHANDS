@@ -209,7 +209,11 @@
       setMessage(authMessage, "If an owner account exists for this email, a reset link has been sent. Check your inbox.");
     } catch (error) {
       console.error("Could not request an owner password reset.", error);
-      setMessage(authMessage, "The reset email couldn't be sent. Check your connection and Supabase redirect settings.", true);
+      setMessage(
+        authMessage,
+        `The reset email couldn't be sent: ${error.message || "Unknown error. Check your connection and Supabase settings."}`,
+        true
+      );
     }
   });
 
