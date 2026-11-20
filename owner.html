@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111312">
+    <title>Owner login — Goodhands</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="shared.js" defer></script>
+    <script src="owner.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Goodhands home">
+        <span class="brand-mark">G<span>.</span></span>
+        <span class="brand-name">GOODHANDS<small>BARBERSHOP</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="index.html">Back to bookings</a>
+      </nav>
+      <button class="logout-button" id="logout-button" type="button" hidden>Log out</button>
+    </header>
+    <main>
+      <section class="owner-auth-wrap" id="auth-panel">
+        <form class="auth-card" id="auth-form">
+          <p class="eyebrow"><span class="eyebrow-line"></span> OWNER ACCESS</p>
+          <h1 id="auth-title">Owner <em>login.</em></h1>
+          <p class="auth-intro" id="auth-intro"></p>
+          <label class="field"><span>OWNER PASSPHRASE</span><input id="owner-password" type="password" autocomplete="current-password" minlength="8" required></label>
+          <label class="field confirm-field" id="confirm-field"><span>CONFIRM PASSPHRASE</span><input id="owner-password-confirm" type="password" autocomplete="new-password" minlength="8"></label>
+          <p class="auth-warning"><strong>Demo-only access.</strong> This browser-only passphrase gate is not secure authentication. Do not use this app for sensitive customer data until it is connected to a protected backend.</p>
+          <button class="button button-dark auth-submit" id="auth-submit" type="submit">Continue <span aria-hidden="true">↗</span></button>
+          <p class="form-message" id="auth-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="section owner-section owner-dashboard" id="owner-dashboard" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow"><span class="eyebrow-line"></span> THE BACK ROOM</p><h2>Owner <em>dashboard.</em></h2></div>
+          <p class="section-aside">Set your hours. Keep the line moving.<br>You're in control.</p>
+        </div>
+        <p class="auth-warning dashboard-warning"><strong>Demo-only:</strong> browser storage and this passphrase screen do not protect data from someone with access to this device or page source.</p>
+        <div class="owner-layout">
+          <form id="hours-form" class="hours-card">
+            <div class="card-title-row"><div><span class="card-kicker">01 / SHOP SETTINGS</span><h3>Shop hours</h3></div><span class="settings-icon">✳</span></div>
+            <div class="hours-grid">
+              <label class="field"><span>OPENS AT</span><input type="time" id="open-time" required></label>
+              <label class="field"><span>CLOSES AT</span><input type="time" id="close-time" required></label>
+              <label class="field"><span>LUNCH STARTS</span><input type="time" id="lunch-start" required></label>
+              <label class="field"><span>LUNCH ENDS</span><input type="time" id="lunch-end" required></label>
+            </div>
+            <label class="field owner-contact-field"><span>SHOP CONTACT PHONE</span><input type="tel" id="owner-phone" autocomplete="tel" placeholder="Include country code for WhatsApp" maxlength="24"></label>
+            <p class="hours-hint">Set your public contact number here. Add a country code to enable WhatsApp.</p>
+            <button type="submit" class="button button-dark hours-save">Save shop hours <span aria-hidden="true">↗</span></button>
+            <p class="form-message" id="hours-message" role="status" aria-live="polite"></p>
+          </form>
+          <div class="manage-card">
+            <div class="card-title-row"><div><span class="card-kicker">02 / KEEP THINGS MOVING</span><h3>Manage the queue</h3></div><span class="manage-count" id="manage-count">0 WAITING</span></div>
+            <div class="manage-list" id="manage-list"></div>
+            <p class="form-message" id="manage-message" role="status" aria-live="polite"></p>
+            <div class="completed-wrap">
+              <button type="button" class="completed-toggle" id="completed-toggle" aria-expanded="false">Completed visits <span id="completed-count">(0)</span><span class="toggle-arrow">⌄</span></button>
+              <div class="completed-list" id="completed-list" hidden></div>
+            </div>
+          </div>
+        </div>
+        <form class="owner-add-form" id="owner-booking-form">
+          <div class="card-title-row">
+            <div><span class="card-kicker">03 / WALK-IN OR PHONE BOOKING</span><h3>Add people to the queue</h3></div>
+            <span class="settings-icon">＋</span>
+          </div>
+          <label class="field owner-party-field"><span>HOW MANY PEOPLE?</span><select id="owner-party-size" name="partySize"><option value="1">1 person</option><option value="2">2 people</option><option value="3">3 people</option><option value="4">4 people</option><option value="5">5 people</option><option value="6">6 people</option></select></label>
+          <div class="form-row owner-customer-fields">
+            <label class="field"><span>YOUR NAME</span><input id="owner-customer-name" autocomplete="name" maxlength="60" required></label>
+            <label class="field"><span>PHONE NUMBER</span><input id="owner-customer-phone" type="tel" autocomplete="tel" maxlength="24" required></label>
+          </div>
+          <section class="service-field">
+            <h4 class="service-heading">SERVICES FOR EACH PERSON</h4>
+            <p>Choose at least one service per person.</p>
+            <div class="person-services" id="owner-person-services"></div>
+          </section>
+          <div class="form-footer"><span id="owner-booking-estimate">Choose services for the group.</span><button class="button button-dark" type="submit">Add to queue <span aria-hidden="true">↗</span></button></div>
+          <p class="form-message" id="owner-booking-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+    <footer><a class="brand footer-brand" href="index.html"><span class="brand-mark">G<span>.</span></span><span class="brand-name">GOODHANDS<small>BARBERSHOP</small></span></a><span>GOOD CUTS. GOOD COMPANY.</span><a href="index.html">BACK TO BOOKINGS ↗</a></footer>
+  </body>
+</html>

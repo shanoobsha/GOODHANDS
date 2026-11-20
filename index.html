@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111312">
+    <title>Goodhands — Barbershop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="shared.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Goodhands home">
+        <span class="brand-mark">G<span>.</span></span>
+        <span class="brand-name">GOODHANDS<small>BARBERSHOP</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#book">Book a visit</a>
+        <a href="#queue">Live queue</a>
+        <a href="owner.html">Owner login</a>
+      </nav>
+      <span class="open-status"><i></i><span id="shop-status">Checking hours</span></span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> YOUR NEIGHBORHOOD BARBER</p>
+          <h1>A good cut.<br><em>No guesswork.</em></h1>
+          <p class="hero-description">Book your spot, keep an eye on the queue, and show up right on time.</p>
+          <a class="button button-light" href="#book">Book your visit <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="sun-disc"></div>
+          <div class="art-caption"><span>EST. 2014</span><span>GOOD HANDS. GREAT HAIR.</span></div>
+          <div class="hero-number">01<span>/04</span></div>
+          <div class="scissor scissor-one">✂</div>
+          <div class="scissor scissor-two">✂</div>
+        </div>
+        <div class="hero-foot">
+          <span>GOOD CUTS, GOOD COMPANY.</span>
+          <span>SCROLL TO FIND YOUR SEAT <b>↓</b></span>
+        </div>
+      </section>
+
+      <section class="stats-bar" aria-label="Current shop queue">
+        <div class="stat-cell"><span class="stat-label">PEOPLE IN THE QUEUE</span><strong id="hero-people">0</strong><span class="stat-note">customers ahead</span></div>
+        <div class="stat-cell"><span class="stat-label">GROUPS WAITING</span><strong id="hero-groups">0</strong><span class="stat-note">bookings in line</span></div>
+        <div class="stat-cell"><span class="stat-label">NEXT AVAILABLE</span><strong id="hero-next">—</strong><span class="stat-note" id="hero-next-note">Check back soon</span></div>
+        <a href="#queue" class="stats-link">See the live queue <span>↗</span></a>
+      </section>
+
+      <section class="section booking-section" id="book">
+        <div class="section-heading">
+          <div><p class="eyebrow"><span class="eyebrow-line"></span> GET IN THE CHAIR</p><h2>Make it <em>yours.</em></h2></div>
+          <p class="section-aside">A few details and you're in.<br>We'll save you a place.</p>
+        </div>
+        <div class="booking-layout">
+          <form id="booking-form" class="booking-form">
+            <label class="field party-field"><span>HOW MANY PEOPLE?</span><select id="party-size" name="partySize"><option value="1">Just me</option><option value="2">2 people</option><option value="3">3 people</option><option value="4">4 people</option><option value="5">5 people</option><option value="6">6 people</option></select></label>
+            <div class="form-row">
+              <label class="field"><span>YOUR NAME</span><input id="customer-name" name="name" autocomplete="name" placeholder="e.g. Alex Morgan" required maxlength="60"></label>
+              <label class="field"><span>PHONE NUMBER</span><input id="customer-phone" name="phone" type="tel" autocomplete="tel" placeholder="e.g. 555 123 4567" required maxlength="24"></label>
+            </div>
+            <section class="service-field">
+              <h3 class="service-heading">WHAT ARE WE DOING TODAY?</h3>
+              <p>Choose services for each person in your group.</p>
+              <div class="person-services" id="person-services"></div>
+            </section>
+            <div class="form-footer">
+              <span id="booking-estimate">Choose a service to see your estimated time.</span>
+              <button class="button button-dark" type="submit">Join the queue <span aria-hidden="true">↗</span></button>
+            </div>
+            <div class="appointment-option">
+              <p>Need a specific time? Appointments are optional; joining the queue is recommended for most visits.</p>
+              <button class="button button-outline" id="choose-appointment" type="button">Choose an appointment time <span aria-hidden="true">↗</span></button>
+            </div>
+            <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+          </form>
+          <aside class="booking-aside">
+            <div class="aside-index">01 — YOUR VISIT</div>
+            <div class="aside-rule"></div>
+            <h3>Good things<br>take <em>good hands.</em></h3>
+            <p>We'll add you to the live queue and show you when to arrive. No waiting around, no surprises.</p>
+            <div class="aside-detail"><span>✳</span><span>Your estimated time updates as the queue moves.</span></div>
+            <div class="aside-stamp">GH<span>✳</span></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="queue-section" id="queue">
+        <div class="section queue-inner">
+          <div class="section-heading queue-heading">
+            <div><p class="eyebrow"><span class="eyebrow-line"></span> RIGHT NOW AT GOODHANDS</p><h2>The <em>lineup.</em></h2></div>
+            <div class="queue-live"><i></i> LIVE QUEUE <span id="queue-updated">JUST NOW</span></div>
+          </div>
+          <div class="queue-summary">
+            <div><span class="stat-label">PEOPLE WAITING</span><strong id="queue-people">0</strong></div>
+            <div><span class="stat-label">BOOKINGS AHEAD</span><strong id="queue-groups">0</strong></div>
+            <div><span class="stat-label">NEXT AVAILABLE</span><strong id="queue-next">—</strong></div>
+          </div>
+          <div class="queue-list" id="queue-list" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <dialog class="booking-dialog appointment-dialog" id="appointment-dialog" aria-labelledby="appointment-title">
+        <div class="confirmation-card">
+          <div class="confirmation-mark">G<span>✳</span></div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> PICK YOUR VISIT TIME</p>
+          <h2 id="appointment-title">Choose a <em>time.</em></h2>
+          <p class="appointment-help">Available appointments today and tomorrow. Times reflect the current queue.</p>
+          <label class="field appointment-date-field" for="appointment-date"><span>DATE</span>
+            <select id="appointment-date"></select>
+          </label>
+          <div class="appointment-slots" id="appointment-slots" role="group" aria-label="Available appointment times"></div>
+          <p class="appointment-message" id="appointment-message" role="status" aria-live="polite"></p>
+          <button class="button button-dark confirmation-close" id="confirm-appointment" type="button" disabled>Confirm appointment <span aria-hidden="true">↗</span></button>
+          <button class="dialog-cancel" id="cancel-appointment" type="button">Back to booking</button>
+        </div>
+      </dialog>
+
+      <dialog class="booking-dialog" id="booking-confirmation" aria-labelledby="confirmation-title">
+        <div class="confirmation-card">
+          <div class="confirmation-mark">G<span>✳</span></div>
+          <p class="eyebrow" id="confirmation-type"><span class="eyebrow-line"></span> YOU'RE IN THE QUEUE</p>
+          <h2 id="confirmation-title">Booking <em>confirmed.</em></h2>
+          <p class="confirmation-number-label">YOUR BOOKING NUMBER</p>
+          <strong class="confirmation-number" id="confirmation-number"></strong>
+          <p class="confirmation-number-help">Your token is the first 2 letters of your name, followed by a hyphen and the last 3 digits of your phone number.</p>
+          <div class="confirmation-time"><span id="confirmation-time-label">ESTIMATED CHAIR TIME</span><strong id="confirmation-time"></strong></div>
+          <p class="arrival-note">Please arrive <strong>15 minutes before</strong> your estimated time.</p>
+          <div class="confirmation-contacts">
+            <a class="confirmation-contact" id="confirmation-call" href="tel:" hidden>Call the shop</a>
+            <a class="confirmation-contact" id="confirmation-whatsapp" href="https://wa.me/" target="_blank" rel="noopener" hidden>WhatsApp</a>
+          </div>
+          <button class="button button-dark confirmation-close" id="confirmation-close" type="button">Got it <span aria-hidden="true">✓</span></button>
+        </div>
+      </dialog>
+
+      <dialog class="booking-dialog" id="after-hours-dialog" aria-labelledby="after-hours-title">
+        <div class="confirmation-card">
+          <div class="confirmation-mark">G<span>✳</span></div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> WE'RE CLOSED FOR TODAY</p>
+          <h2 id="after-hours-title">The shop is <em>closed.</em></h2>
+          <p class="after-hours-message">Today's closing time is <strong id="closing-time"></strong>. Contact the owner or book for tomorrow.</p>
+          <div class="confirmation-contacts after-hours-contacts">
+            <a class="confirmation-contact" id="after-hours-call" href="tel:" hidden>Call the shop</a>
+            <a class="confirmation-contact" id="after-hours-whatsapp" href="https://wa.me/" target="_blank" rel="noopener" hidden>WhatsApp</a>
+            <span class="contact-unavailable" id="after-hours-no-contact" hidden>Owner contact details aren't available.</span>
+          </div>
+          <button class="button button-dark confirmation-close" id="book-tomorrow" type="button">Book for tomorrow <span aria-hidden="true">↗</span></button>
+          <button class="dialog-cancel" id="cancel-after-hours" type="button">Not now</button>
+        </div>
+      </dialog>
+
+      <section class="closing-note"><span>✳</span><p>THANKS FOR WAITING.<br><em>WE'LL TAKE IT FROM HERE.</em></p><span>✳</span></section>
+    </main>
+    <footer><a class="brand footer-brand" href="#"><span class="brand-mark">G<span>.</span></span><span class="brand-name">GOODHANDS<small>BARBERSHOP</small></span></a><span>GOOD CUTS. GOOD COMPANY.</span><span class="footer-actions"><a id="contact-owner" href="tel:" hidden>CALL SHOP ↗</a><a id="whatsapp-owner" href="https://wa.me/" target="_blank" rel="noopener" hidden>WHATSAPP ↗</a><a href="owner.html">OWNER LOGIN ↗</a></span></footer>
+  </body>
+</html>
