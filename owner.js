@@ -2,6 +2,7 @@
   "use strict";
 
   const authForm = document.getElementById("auth-form");
+  const passwordUpdateForm = document.getElementById("password-update-form");
   const authPanel = document.getElementById("auth-panel");
   const dashboard = document.getElementById("owner-dashboard");
   const authMessage = document.getElementById("auth-message");
@@ -31,13 +32,27 @@
     render();
   }
 
+  function showPasswordUpdate() {
+    authPanel.hidden = false;
+    authForm.hidden = true;
+    passwordUpdateForm.hidden = false;
+    dashboard.hidden = true;
+    logoutButton.hidden = true;
+  }
+
   function showLogin() {
     authPanel.hidden = false;
+    authForm.hidden = false;
+    passwordUpdateForm.hidden = true;
     dashboard.hidden = true;
     logoutButton.hidden = true;
     document.getElementById("owner-email").value = "";
     passwordInput.value = "";
     setAuthMode();
+    const errorCode = new URLSearchParams(window.location.hash.slice(1)).get("error_code");
+    if (errorCode === "otp_expired") {
+      setMessage(authMessage, "This recovery link expired or was already used. Request a fresh password reset email.", true);
+    }
   }
 
   function safeText(value) {
@@ -180,6 +195,43 @@
     } catch (error) {
       console.error("Could not authenticate the owner.", error);
       setMessage(authMessage, "Login failed. Check your email and password, and confirm the account is authorized for this shop.", true);
+    }
+  });
+
+  document.getElementById("forgot-password").addEventListener("click", async () => {
+    const emailInput = document.getElementById("owner-email");
+    setMessage(authMessage, "");
+    if (!emailInput.reportValidity()) return;
+
+    try {
+      const redirectTo = new URL("owner.html", window.location.href).toString();
+      await window.Goodhands.requestOwnerPasswordReset(emailInput.value.trim(), redirectTo);
+      setMessage(authMessage, "If an owner account exists for this email, a reset link has been sent. Check your inbox.");
+    } catch (error) {
+      console.error("Could not request an owner password reset.", error);
+      setMessage(authMessage, "The reset email couldn't be sent. Check your connection and Supabase redirect settings.", true);
+    }
+  });
+
+  passwordUpdateForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const newPassword = document.getElementById("new-owner-password").value;
+    const confirmPassword = document.getElementById("confirm-owner-password").value;
+    const message = document.getElementById("password-update-message");
+    setMessage(message, "");
+    if (newPassword !== confirmPassword) {
+      setMessage(message, "The passwords don't match.", true);
+      return;
+    }
+
+    try {
+      await window.Goodhands.updateOwnerPassword(newPassword);
+      state = window.Goodhands.loadState();
+      showDashboard();
+      setMessage(document.getElementById("manage-message"), "Owner password updated.");
+    } catch (error) {
+      console.error("Could not update the owner password.", error);
+      setMessage(message, "Password update failed. The recovery link may have expired; request a new one and try again.", true);
     }
   });
 
@@ -360,16 +412,21 @@
     }, 60_000 - (Date.now() % 60_000));
   }
 
-  window.Goodhands.isOwnerAuthenticated().then(isAuthenticated => {
-    if (isAuthenticated) {
-      state = window.Goodhands.loadState();
-      showDashboard();
-    }
-    else showLogin();
-  }).catch(error => {
-    console.error("Could not check the owner session.", error);
-    showLogin();
-    setMessage(authMessage, "Could not verify the online owner session. Reload the page and try again.", true);
-  });
+  if (window.Goodhands.isPasswordRecovery()) {
+    showPasswordUpdate();
+  } else {
+    window.Goodhands.isOwnerAuthenticated().then(isAuthenticated => {
+      if (isAuthenticated) {
+        state = window.Goodhands.loadState();
+        showDashboard();
+      } else {
+        showLogin();
+      }
+    }).catch(error => {
+      console.error("Could not check the owner session.", error);
+      showLogin();
+      setMessage(authMessage, "Could not verify the online owner session. Reload the page and try again.", true);
+    });
+  }
   scheduleClockRefresh();
 })();

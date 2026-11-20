@@ -31,7 +31,17 @@
           <label class="field"><span>OWNER EMAIL</span><input id="owner-email" type="email" autocomplete="username" required></label>
           <label class="field"><span>OWNER PASSWORD</span><input id="owner-password" type="password" autocomplete="current-password" minlength="8" required></label>
           <button class="button button-dark auth-submit" id="auth-submit" type="submit">Log in <span aria-hidden="true">↗</span></button>
+          <button class="dialog-cancel forgot-password" id="forgot-password" type="button">Forgot password?</button>
           <p class="form-message" id="auth-message" role="status" aria-live="polite"></p>
+        </form>
+        <form class="auth-card" id="password-update-form" hidden>
+          <p class="eyebrow"><span class="eyebrow-line"></span> ACCOUNT RECOVERY</p>
+          <h1>Set a new <em>password.</em></h1>
+          <p class="auth-intro">Choose a new password for your owner account.</p>
+          <label class="field"><span>NEW PASSWORD</span><input id="new-owner-password" type="password" autocomplete="new-password" minlength="8" required></label>
+          <label class="field"><span>CONFIRM NEW PASSWORD</span><input id="confirm-owner-password" type="password" autocomplete="new-password" minlength="8" required></label>
+          <button class="button button-dark auth-submit" type="submit">Update password <span aria-hidden="true">↗</span></button>
+          <p class="form-message" id="password-update-message" role="status" aria-live="polite"></p>
         </form>
       </section>
 

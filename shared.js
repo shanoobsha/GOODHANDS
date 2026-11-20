@@ -20,6 +20,7 @@
   let ownerMode = false;
   let refreshTimer = null;
   let refreshInProgress = false;
+  let passwordRecovery = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
 
   function loadState() {
     return JSON.parse(JSON.stringify(stateCache));
@@ -53,7 +54,12 @@
     client = window.supabase.createClient(config.url, config.anonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
+    client.auth.onAuthStateChange(event => {
+      if (event === "PASSWORD_RECOVERY") passwordRecovery = true;
+    });
     if (ownerMode) {
+      const { error } = await client.auth.getSession();
+      if (error) throw error;
       stateCache = JSON.parse(JSON.stringify(DEFAULT_STATE));
     } else {
       await loadCloudState();
@@ -480,6 +486,23 @@
     }
   }
 
+  async function requestOwnerPasswordReset(email, redirectTo) {
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+  }
+
+  async function updateOwnerPassword(password) {
+    const { error } = await client.auth.updateUser({ password });
+    if (error) throw error;
+    passwordRecovery = false;
+    ownerMode = true;
+    await loadCloudState();
+  }
+
+  function isPasswordRecovery() {
+    return passwordRecovery;
+  }
+
   async function isOwnerAuthenticated() {
     const { data, error } = await client.auth.getSession();
     if (error) throw error;
@@ -502,6 +525,9 @@
     createBooking,
     refreshState,
     signInOwner,
+    requestOwnerPasswordReset,
+    updateOwnerPassword,
+    isPasswordRecovery,
     isOwnerAuthenticated,
     signOutOwner,
     minutesOf,

@@ -15,7 +15,8 @@ The site uses Supabase for shared bookings, queue updates, shop settings, and ow
    where id = true;
    ```
 
-5. In **Project Settings → API**, copy the Project URL and the `anon`/publishable key. Put them into `supabase-config.js`:
+5. In **Authentication → URL Configuration**, set **Site URL** to your deployed Vercel origin (for example, `https://your-shop.vercel.app`). Add `https://your-shop.vercel.app/owner.html` to the allowed **Redirect URLs**. Add your local development URL separately if needed.
+6. In **Project Settings → API**, copy the Project URL and the `anon`/publishable key. Put them into `supabase-config.js`:
 
    ```js
    window.GOODHANDS_SUPABASE = {
@@ -25,6 +26,8 @@ The site uses Supabase for shared bookings, queue updates, shop settings, and ow
    ```
 
    The anon/publishable key is intended to be visible in a website. Never put the `service_role` or secret key in this file or in frontend code.
+
+Use **Forgot password?** on the deployed `/owner.html` page to request a reset. Its recovery link returns to the owner page, where you can enter and confirm the new password. If you change the auth URL settings, request a new email; old links may already be expired.
 
 ## 2. Deploy on Vercel
 

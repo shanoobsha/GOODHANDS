@@ -248,6 +248,8 @@ footer > span, footer > a:last-child { color: #bcc4b9; font-size: 8px; letter-sp
 .auth-warning { margin: 18px 0; padding: 12px; border-left: 2px solid #b98e64; background: #f5f0e9; color: #716351; font-size: 9px; line-height: 1.7; }
 .auth-warning strong { color: #755636; }
 .auth-submit { width: 100%; }
+.forgot-password { display: block; margin: 12px auto 0; }
+.auth-card .form-message { margin-top: 12px; }
 .dashboard-warning { margin: -20px 0 23px; }
 
 @media (max-width: 850px) {
