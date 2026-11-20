@@ -202,6 +202,7 @@ footer > span, footer > a:last-child { color: #bcc4b9; font-size: 8px; letter-sp
 .footer-actions a:hover { color: white; }
 .owner-contact-field { margin-top: 18px; }
 .booking-dialog { width: min(460px, calc(100% - 32px)); max-width: none; max-height: calc(100% - 32px); padding: 0; border: 0; background: transparent; color: var(--ink); }
+.startup-error { max-width: 760px; margin: 20px auto; padding: 16px 20px; border-left: 3px solid #a04f38; background: #fff3ef; color: #752f20; font-size: 13px; line-height: 1.6; }
 .appointment-dialog { width: min(520px, calc(100% - 32px)); }
 .booking-dialog::backdrop { background: #101713b8; backdrop-filter: blur(3px); }
 .confirmation-card { position: relative; padding: 33px; border: 1px solid #e0e0d8; background: var(--white); text-align: center; }

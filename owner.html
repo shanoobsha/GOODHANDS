@@ -9,10 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="shared.js" defer></script>
-    <script src="owner.js" defer></script>
+    <script type="module" src="bootstrap.js"></script>
   </head>
-  <body>
+  <body data-app-page="owner">
     <header class="topbar">
       <a class="brand" href="index.html" aria-label="Goodhands home">
         <span class="brand-mark">G<span>.</span></span>
@@ -29,10 +28,9 @@
           <p class="eyebrow"><span class="eyebrow-line"></span> OWNER ACCESS</p>
           <h1 id="auth-title">Owner <em>login.</em></h1>
           <p class="auth-intro" id="auth-intro"></p>
-          <label class="field"><span>OWNER PASSPHRASE</span><input id="owner-password" type="password" autocomplete="current-password" minlength="8" required></label>
-          <label class="field confirm-field" id="confirm-field"><span>CONFIRM PASSPHRASE</span><input id="owner-password-confirm" type="password" autocomplete="new-password" minlength="8"></label>
-          <p class="auth-warning"><strong>Demo-only access.</strong> This browser-only passphrase gate is not secure authentication. Do not use this app for sensitive customer data until it is connected to a protected backend.</p>
-          <button class="button button-dark auth-submit" id="auth-submit" type="submit">Continue <span aria-hidden="true">↗</span></button>
+          <label class="field"><span>OWNER EMAIL</span><input id="owner-email" type="email" autocomplete="username" required></label>
+          <label class="field"><span>OWNER PASSWORD</span><input id="owner-password" type="password" autocomplete="current-password" minlength="8" required></label>
+          <button class="button button-dark auth-submit" id="auth-submit" type="submit">Log in <span aria-hidden="true">↗</span></button>
           <p class="form-message" id="auth-message" role="status" aria-live="polite"></p>
         </form>
       </section>
@@ -42,7 +40,7 @@
           <div><p class="eyebrow"><span class="eyebrow-line"></span> THE BACK ROOM</p><h2>Owner <em>dashboard.</em></h2></div>
           <p class="section-aside">Set your hours. Keep the line moving.<br>You're in control.</p>
         </div>
-        <p class="auth-warning dashboard-warning"><strong>Demo-only:</strong> browser storage and this passphrase screen do not protect data from someone with access to this device or page source.</p>
+        <p class="auth-warning dashboard-warning">Shop settings and customer details are stored in the shared online database. Keep your owner account password private.</p>
         <div class="owner-layout">
           <form id="hours-form" class="hours-card">
             <div class="card-title-row"><div><span class="card-kicker">01 / SHOP SETTINGS</span><h3>Shop hours</h3></div><span class="settings-icon">✳</span></div>

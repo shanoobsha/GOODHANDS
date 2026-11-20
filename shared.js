@@ -9,45 +9,125 @@
     "Facial": 30,
     "Hair wash": 15
   };
-  const STORAGE_KEY = "goodhands-barbershop-v1";
   const DEFAULT_STATE = {
     bookings: [],
     completed: [],
     ownerPhone: "",
     hours: { open: "09:00", close: "18:00", lunchStart: "13:00", lunchEnd: "14:00" }
   };
-  const updates = typeof BroadcastChannel === "function" ? new BroadcastChannel(STORAGE_KEY) : null;
+  let stateCache = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  let client = null;
+  let ownerMode = false;
+  let refreshTimer = null;
+  let refreshInProgress = false;
 
   function loadState() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (!saved || typeof saved !== "object") return structuredClone(DEFAULT_STATE);
-      return {
-        bookings: Array.isArray(saved.bookings) ? saved.bookings : [],
-        completed: Array.isArray(saved.completed) ? saved.completed : [],
-        ownerPhone: typeof saved.ownerPhone === "string" ? saved.ownerPhone : "",
-        hours: { ...DEFAULT_STATE.hours, ...(saved.hours || {}) }
-      };
-    } catch (error) {
-      console.error("Could not load saved barbershop data.", error);
-      return structuredClone(DEFAULT_STATE);
+    return JSON.parse(JSON.stringify(stateCache));
+  }
+
+  async function loadCloudState() {
+    const functionName = ownerMode ? "get_owner_state" : "get_public_state";
+    const { data, error } = await client.rpc(functionName);
+    if (error) throw error;
+    stateCache = {
+      ...DEFAULT_STATE,
+      ...data,
+      bookings: Array.isArray(data.bookings) ? data.bookings : [],
+      completed: Array.isArray(data.completed) ? data.completed : [],
+      hours: { ...DEFAULT_STATE.hours, ...(data.hours || {}) }
+    };
+    return loadState();
+  }
+
+  async function initialize(isOwnerPage) {
+    ownerMode = isOwnerPage;
+    const config = window.GOODHANDS_SUPABASE;
+    if (!config || !config.url || !config.anonKey
+      || config.url.includes("YOUR_PROJECT") || config.anonKey.includes("YOUR_SUPABASE")) {
+      throw new Error("Supabase is not configured. Follow the setup steps in DEPLOYMENT.md.");
+    }
+    if (!window.supabase?.createClient) {
+      throw new Error("Supabase client could not load. Check your internet connection and reload.");
+    }
+
+    client = window.supabase.createClient(config.url, config.anonKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    if (ownerMode) {
+      stateCache = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    } else {
+      await loadCloudState();
+    }
+
+    if (!refreshTimer) {
+      refreshTimer = window.setInterval(async () => {
+        if (refreshInProgress) return;
+        refreshInProgress = true;
+        try {
+          if (ownerMode) {
+            const { data, error } = await client.auth.getSession();
+            if (error) throw error;
+            if (!data.session) return;
+          }
+          await loadCloudState();
+          if (typeof updateCallback === "function") updateCallback();
+        } catch (error) {
+          console.error("Could not refresh the shared barbershop data.", error);
+        } finally {
+          refreshInProgress = false;
+        }
+      }, 3000);
     }
   }
 
-  function saveState(state, messageElement) {
+  async function saveState(state, messageElement) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      if (updates) updates.postMessage({ type: "state-updated" });
+      const { data, error } = await client.rpc("save_owner_state", { p_state: state });
+      if (error) throw error;
+      stateCache = {
+        ...DEFAULT_STATE,
+        ...data,
+        bookings: Array.isArray(data.bookings) ? data.bookings : [],
+        completed: Array.isArray(data.completed) ? data.completed : [],
+        hours: { ...DEFAULT_STATE.hours, ...(data.hours || {}) }
+      };
       return true;
     } catch (error) {
-      console.error("Could not save barbershop data.", error);
+      console.error("Could not save shared barbershop data.", error);
       if (messageElement) {
-        messageElement.textContent = "Your changes couldn't be saved in this browser.";
+        messageElement.textContent = "Your changes couldn't be saved online. Please check your connection and try again.";
         messageElement.classList.add("error");
       }
       return false;
     }
   }
+
+  async function createBooking(booking, position, messageElement) {
+    try {
+      const { data, error } = await client.rpc("create_booking", {
+        p_booking: booking,
+        p_position: position
+      });
+      if (error) throw error;
+      stateCache = {
+        ...DEFAULT_STATE,
+        ...data,
+        bookings: Array.isArray(data.bookings) ? data.bookings : [],
+        completed: [],
+        hours: { ...DEFAULT_STATE.hours, ...(data.hours || {}) }
+      };
+      return true;
+    } catch (error) {
+      console.error("Could not add the online booking.", error);
+      if (messageElement) {
+        messageElement.textContent = "Your booking couldn't be saved online. Please check your connection and try again.";
+        messageElement.classList.add("error");
+      }
+      return false;
+    }
+  }
+
+  let updateCallback = null;
 
   function minutesOf(value) {
     const [hours, minutes] = value.split(":").map(Number);
@@ -378,40 +458,52 @@
   }
 
   function subscribeToUpdates(callback) {
-    let lastSavedState = localStorage.getItem(STORAGE_KEY);
-    const refresh = () => {
-      const savedState = localStorage.getItem(STORAGE_KEY);
-      if (savedState === lastSavedState) return;
-      lastSavedState = savedState;
-      callback();
-    };
-    const handleBroadcast = event => {
-      if (event.data?.type === "state-updated") {
-        lastSavedState = localStorage.getItem(STORAGE_KEY);
-        callback();
-      }
-    };
-    const handleStorage = event => {
-      if (event.key === STORAGE_KEY) {
-        lastSavedState = event.newValue;
-        callback();
-      }
-    };
-
-    if (updates) updates.addEventListener("message", handleBroadcast);
-    window.addEventListener("storage", handleStorage);
-    const pollId = window.setInterval(refresh, 1000);
+    updateCallback = callback;
     return () => {
-      if (updates) updates.removeEventListener("message", handleBroadcast);
-      window.removeEventListener("storage", handleStorage);
-      window.clearInterval(pollId);
+      if (updateCallback === callback) updateCallback = null;
     };
   }
 
+  async function refreshState() {
+    return loadCloudState();
+  }
+
+  async function signInOwner(email, password) {
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    ownerMode = true;
+    try {
+      await loadCloudState();
+    } catch (loadError) {
+      await client.auth.signOut();
+      throw loadError;
+    }
+  }
+
+  async function isOwnerAuthenticated() {
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    if (!data.session) return false;
+    await loadCloudState();
+    return true;
+  }
+
+  async function signOutOwner() {
+    const { error } = await client.auth.signOut();
+    if (error) throw error;
+    ownerMode = true;
+    stateCache = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }
+
   window.Goodhands = {
-    STORAGE_KEY,
+    initialize,
     loadState,
     saveState,
+    createBooking,
+    refreshState,
+    signInOwner,
+    isOwnerAuthenticated,
+    signOutOwner,
     minutesOf,
     timeFromMinutes,
     getSchedule,

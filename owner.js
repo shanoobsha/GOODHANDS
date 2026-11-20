@@ -1,16 +1,11 @@
 (() => {
   "use strict";
 
-  const AUTH_KEY = "goodhands-owner-auth-v1";
-  const SESSION_KEY = "goodhands-owner-session-v1";
-  const ITERATIONS = 120_000;
   const authForm = document.getElementById("auth-form");
   const authPanel = document.getElementById("auth-panel");
   const dashboard = document.getElementById("owner-dashboard");
   const authMessage = document.getElementById("auth-message");
   const passwordInput = document.getElementById("owner-password");
-  const confirmInput = document.getElementById("owner-password-confirm");
-  const confirmField = document.getElementById("confirm-field");
   const logoutButton = document.getElementById("logout-button");
   const ownerBookingForm = document.getElementById("owner-booking-form");
   const ownerPersonServices = document.getElementById("owner-person-services");
@@ -22,62 +17,11 @@
     element.classList.toggle("error", isError);
   }
 
-  function base64(bytes) {
-    return btoa(String.fromCharCode(...new Uint8Array(bytes)));
-  }
-
-  async function hashPassphrase(passphrase, salt) {
-    if (!window.crypto?.subtle) {
-      throw new Error("Passphrase setup requires a secure browser context. Open this site through localhost or HTTPS.");
-    }
-    const key = await window.crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(passphrase),
-      "PBKDF2",
-      false,
-      ["deriveBits"]
-    );
-    return window.crypto.subtle.deriveBits({
-      name: "PBKDF2",
-      salt,
-      iterations: ITERATIONS,
-      hash: "SHA-256"
-    }, key, 256);
-  }
-
-  async function createCredential(passphrase) {
-    const salt = window.crypto.getRandomValues(new Uint8Array(16));
-    const hash = await hashPassphrase(passphrase, salt);
-    return {
-      salt: base64(salt),
-      hash: base64(hash),
-      iterations: ITERATIONS
-    };
-  }
-
-  async function verifyPassphrase(passphrase, credential) {
-    const salt = Uint8Array.from(atob(credential.salt), character => character.charCodeAt(0));
-    const hash = await hashPassphrase(passphrase, salt);
-    return base64(hash) === credential.hash;
-  }
-
   function setAuthMode() {
-    let credential;
-    try {
-      credential = JSON.parse(localStorage.getItem(AUTH_KEY));
-    } catch (error) {
-      console.error("Could not read the owner login setup.", error);
-    }
-    const isSetup = !credential;
-    document.getElementById("auth-title").innerHTML = isSetup ? "Set up owner <em>access.</em>" : "Owner <em>login.</em>";
-    document.getElementById("auth-intro").textContent = isSetup
-      ? "Create a passphrase to access shop hours and customer bookings on this browser."
-      : "Enter your passphrase to manage the shop and customer queue.";
-    document.getElementById("auth-submit").innerHTML = isSetup ? "Create passphrase <span aria-hidden=\"true\">↗</span>" : "Log in <span aria-hidden=\"true\">↗</span>";
-    confirmField.hidden = !isSetup;
-    confirmInput.required = isSetup;
-    passwordInput.autocomplete = isSetup ? "new-password" : "current-password";
-    authForm.dataset.mode = isSetup ? "setup" : "login";
+    document.getElementById("auth-title").innerHTML = "Owner <em>login.</em>";
+    document.getElementById("auth-intro").textContent = "Sign in with the owner account created in your Supabase project.";
+    document.getElementById("auth-submit").innerHTML = "Log in <span aria-hidden=\"true\">↗</span>";
+    passwordInput.autocomplete = "current-password";
   }
 
   function showDashboard() {
@@ -91,8 +35,8 @@
     authPanel.hidden = false;
     dashboard.hidden = true;
     logoutButton.hidden = true;
+    document.getElementById("owner-email").value = "";
     passwordInput.value = "";
-    confirmInput.value = "";
     setAuthMode();
   }
 
@@ -180,7 +124,7 @@
   });
   renderOwnerServiceChoices();
 
-  ownerBookingForm.addEventListener("submit", event => {
+  ownerBookingForm.addEventListener("submit", async event => {
     event.preventDefault();
     const message = document.getElementById("owner-booking-message");
     setMessage(message, "");
@@ -211,7 +155,7 @@
       addedByOwner: true
     };
     state.bookings.push(booking);
-    if (!window.Goodhands.saveState(state, message)) {
+    if (!await window.Goodhands.saveState(state, message)) {
       state.bookings.pop();
       return;
     }
@@ -226,37 +170,20 @@
   authForm.addEventListener("submit", async event => {
     event.preventDefault();
     setMessage(authMessage, "");
-    const passphrase = passwordInput.value;
-    const credential = localStorage.getItem(AUTH_KEY);
-
     try {
-      if (authForm.dataset.mode === "setup") {
-        if (passphrase.length < 8) {
-          setMessage(authMessage, "Use a passphrase with at least 8 characters.", true);
-          return;
-        }
-        if (passphrase !== confirmInput.value) {
-          setMessage(authMessage, "The passphrases don't match.", true);
-          return;
-        }
-        localStorage.setItem(AUTH_KEY, JSON.stringify(await createCredential(passphrase)));
-      } else {
-        const savedCredential = JSON.parse(credential);
-        if (!await verifyPassphrase(passphrase, savedCredential)) {
-          setMessage(authMessage, "That passphrase didn't match. Try again.", true);
-          return;
-        }
-      }
-
-      sessionStorage.setItem(SESSION_KEY, "unlocked");
+      await window.Goodhands.signInOwner(
+        document.getElementById("owner-email").value.trim(),
+        passwordInput.value
+      );
+      state = window.Goodhands.loadState();
       showDashboard();
     } catch (error) {
       console.error("Could not authenticate the owner.", error);
-      setMessage(authMessage, error.message || "Owner access could not be verified.", true);
+      setMessage(authMessage, "Login failed. Check your email and password, and confirm the account is authorized for this shop.", true);
     }
   });
 
-  document.getElementById("hours-form").addEventListener("submit", event => {
+  document.getElementById("hours-form").addEventListener("submit", async event => {
     event.preventDefault();
     const message = document.getElementById("hours-message");
     setMessage(message, "");
@@ -282,7 +209,7 @@
     const previousPhone = state.ownerPhone;
     state.hours = hours;
     state.ownerPhone = ownerPhone;
-    if (!window.Goodhands.saveState(state, message)) {
+    if (!await window.Goodhands.saveState(state, message)) {
       state.hours = previousHours;
       state.ownerPhone = previousPhone;
       return;
@@ -291,7 +218,7 @@
     setMessage(message, "Shop hours and contact details saved.");
   });
 
-  document.getElementById("manage-list").addEventListener("click", event => {
+  document.getElementById("manage-list").addEventListener("click", async event => {
     const stopButton = event.target.closest("[data-stop]");
     if (stopButton) {
       const booking = state.bookings.find(item => item.id === stopButton.dataset.stop);
@@ -305,7 +232,7 @@
       delete booking.pausedAt;
       delete booking.totalPausedMs;
 
-      if (!window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
+      if (!await window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
         booking.startedAt = previousState.startedAt;
         if (previousState.pausedAt !== undefined) booking.pausedAt = previousState.pausedAt;
         if (previousState.totalPausedMs !== undefined) booking.totalPausedMs = previousState.totalPausedMs;
@@ -332,7 +259,7 @@
         booking.pausedAt = new Date().toISOString();
       }
 
-      if (!window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
+      if (!await window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
         if (previousPausedAt) booking.pausedAt = previousPausedAt;
         else delete booking.pausedAt;
         if (previousTotalPausedMs === undefined) delete booking.totalPausedMs;
@@ -357,7 +284,7 @@
       const [booking] = state.bookings.splice(index, 1);
       booking.startedAt = new Date().toISOString();
       state.bookings.unshift(booking);
-      if (!window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
+      if (!await window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
         state.bookings.shift();
         delete booking.startedAt;
         state.bookings.splice(index, 0, booking);
@@ -382,7 +309,7 @@
       ? nextBooking
       : null;
     if (autoStartedBooking) autoStartedBooking.startedAt = new Date().toISOString();
-    if (!window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
+    if (!await window.Goodhands.saveState(state, document.getElementById("manage-message"))) {
       state.completed.pop();
       if (autoStartedBooking) delete autoStartedBooking.startedAt;
       state.bookings.splice(index, 0, booking);
@@ -409,8 +336,13 @@
     document.getElementById("completed-list").hidden = isExpanded;
   });
 
-  logoutButton.addEventListener("click", () => {
-    sessionStorage.removeItem(SESSION_KEY);
+  logoutButton.addEventListener("click", async () => {
+    try {
+      await window.Goodhands.signOutOwner();
+    } catch (error) {
+      console.error("Could not sign out the owner.", error);
+      setMessage(authMessage, "Could not sign out. Please close this browser tab.", true);
+    }
     showLogin();
   });
 
@@ -428,7 +360,16 @@
     }, 60_000 - (Date.now() % 60_000));
   }
 
-  if (sessionStorage.getItem(SESSION_KEY) === "unlocked") showDashboard();
-  else showLogin();
+  window.Goodhands.isOwnerAuthenticated().then(isAuthenticated => {
+    if (isAuthenticated) {
+      state = window.Goodhands.loadState();
+      showDashboard();
+    }
+    else showLogin();
+  }).catch(error => {
+    console.error("Could not check the owner session.", error);
+    showLogin();
+    setMessage(authMessage, "Could not verify the online owner session. Reload the page and try again.", true);
+  });
   scheduleClockRefresh();
 })();

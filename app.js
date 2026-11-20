@@ -129,8 +129,14 @@
     afterHoursDialog.showModal();
   }
 
-  function saveBooking(booking) {
-    state = window.Goodhands.loadState();
+  async function saveBooking(booking) {
+    try {
+      state = await window.Goodhands.refreshState();
+    } catch (error) {
+      console.error("Could not verify the latest queue before booking.", error);
+      showMessage("The live queue couldn't be reached. Please try again.", true);
+      return false;
+    }
     const appointmentTime = booking.scheduledAt ? new Date(booking.scheduledAt).getTime() : null;
     const bookingIndex = appointmentTime === null
       ? window.Goodhands.getWalkInInsertionIndex(state, booking)
@@ -140,12 +146,11 @@
         ));
         return insertAt < 0 ? state.bookings.length : insertAt;
       })();
-    state.bookings.splice(bookingIndex, 0, booking);
-    if (!window.Goodhands.saveState(state, document.getElementById("form-message"))) {
-      state.bookings.splice(bookingIndex, 1);
-      return;
+    if (!await window.Goodhands.createBooking(booking, bookingIndex, document.getElementById("form-message"))) {
+      return false;
     }
 
+    state = window.Goodhands.loadState();
     const estimatedStart = window.Goodhands.getSchedule(state).bookings.find(item => item.booking.id === booking.id).start;
     render();
     form.reset();
@@ -180,7 +185,8 @@
       partySize,
       perPersonServices,
       services: [...new Set(perPersonServices.flat())],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
   }
 
@@ -278,7 +284,7 @@
   });
   renderPersonServices();
 
-  form.addEventListener("submit", event => {
+  form.addEventListener("submit", async event => {
     event.preventDefault();
     const booking = buildBooking();
     if (!booking) return;
@@ -289,12 +295,19 @@
       return;
     }
 
-    saveBooking(booking);
+    await saveBooking(booking);
   });
 
-  document.getElementById("choose-appointment").addEventListener("click", () => {
+  document.getElementById("choose-appointment").addEventListener("click", async () => {
     const booking = buildBooking();
     if (!booking) return;
+    try {
+      state = await window.Goodhands.refreshState();
+    } catch (error) {
+      console.error("Could not load appointment availability.", error);
+      showMessage("Appointment availability couldn't be loaded. Please try again.", true);
+      return;
+    }
     pendingBooking = booking;
     pendingAppointmentSlot = null;
     renderAppointmentSlots();
@@ -304,9 +317,16 @@
     pendingAppointmentSlot = null;
     renderAppointmentSlots();
   });
-  document.getElementById("confirm-appointment").addEventListener("click", () => {
+  document.getElementById("confirm-appointment").addEventListener("click", async () => {
     if (!pendingBooking || !pendingAppointmentSlot) return;
-    state = window.Goodhands.loadState();
+    try {
+      state = await window.Goodhands.refreshState();
+    } catch (error) {
+      console.error("Could not verify the selected appointment.", error);
+      document.getElementById("appointment-message").textContent = "The live queue couldn't be reached. Please try again.";
+      document.getElementById("appointment-message").classList.add("error");
+      return;
+    }
     const stillAvailable = window.Goodhands.getAvailableAppointmentSlots(
       state,
       window.Goodhands.durationFor(pendingBooking),
@@ -323,7 +343,7 @@
     pendingBooking = null;
     pendingAppointmentSlot = null;
     appointmentDialog.close();
-    saveBooking(booking);
+    await saveBooking(booking);
   });
   document.getElementById("cancel-appointment").addEventListener("click", () => {
     pendingBooking = null;
@@ -338,12 +358,12 @@
     }
   });
 
-  document.getElementById("book-tomorrow").addEventListener("click", () => {
+  document.getElementById("book-tomorrow").addEventListener("click", async () => {
     if (!pendingBooking) return;
     const booking = pendingBooking;
     pendingBooking = null;
     afterHoursDialog.close();
-    saveBooking(booking);
+    await saveBooking(booking);
   });
   document.getElementById("cancel-after-hours").addEventListener("click", () => {
     pendingBooking = null;
